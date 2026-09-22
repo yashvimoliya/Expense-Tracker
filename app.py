@@ -4,34 +4,27 @@ from database import init_db
 
 app = Flask(__name__)
 
-# Secret key for login session
 app.secret_key = "expense_tracker_secret_key"
 
-# Create database and tables
 init_db()
 
-
-# =========================================================
-# DATABASE HELPER
-# =========================================================
 
 def get_db():
     conn = sqlite3.connect("expense.db")
     return conn
 
 
-# =========================================================
-# HOME / REGISTER
-# =========================================================
-
 @app.route("/")
 def home():
     return render_template("register.html")
 
 
+# =========================
+# REGISTER
+# =========================
+
 @app.route("/register", methods=["POST"])
 def register():
-
     username = request.form.get("username", "").strip()
     email = request.form.get("email", "").strip()
     password = request.form.get("password", "")
@@ -53,7 +46,6 @@ def register():
     cursor = conn.cursor()
 
     try:
-
         cursor.execute(
             """
             INSERT INTO users(username, email, password)
@@ -63,7 +55,6 @@ def register():
         )
 
         conn.commit()
-
         conn.close()
 
         return render_template(
@@ -72,7 +63,6 @@ def register():
         )
 
     except sqlite3.IntegrityError:
-
         conn.close()
 
         return render_template(
@@ -81,19 +71,17 @@ def register():
         )
 
 
-# =========================================================
+# =========================
 # LOGIN
-# =========================================================
+# =========================
 
 @app.route("/login", methods=["GET"])
 def login_page():
-
     return render_template("login.html")
 
 
 @app.route("/login", methods=["POST"])
 def login():
-
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
 
@@ -110,11 +98,9 @@ def login():
     )
 
     user = cursor.fetchone()
-
     conn.close()
 
     if user:
-
         session["user_id"] = user[0]
         session["username"] = user[1]
         session["email"] = user[2] or ""
@@ -127,45 +113,120 @@ def login():
     )
 
 
-# =========================================================
-# DASHBOARD
-# =========================================================
+# =========================
+# FORGOT PASSWORD
+# =========================
 
-@app.route("/dashboard")
-def dashboard():
+@app.route("/forgot-password", methods=["GET"])
+def forgot_password_page():
+    return render_template("forgot_password.html")
 
-    if "user_id" not in session:
-        return redirect("/login")
+
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip()
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not username or not email or not new_password:
+        return render_template(
+            "forgot_password.html",
+            message="Please fill all fields."
+        )
+
+    if new_password != confirm_password:
+        return render_template(
+            "forgot_password.html",
+            message="Passwords do not match."
+        )
 
     conn = get_db()
     cursor = conn.cursor()
 
-    # All expenses
+    cursor.execute(
+        """
+        SELECT id
+        FROM users
+        WHERE username=? AND email=?
+        """,
+        (username, email)
+    )
+
+    user = cursor.fetchone()
+
+    if not user:
+        conn.close()
+
+        return render_template(
+            "forgot_password.html",
+            message="Username and email do not match."
+        )
+
+    cursor.execute(
+        """
+        UPDATE users
+        SET password=?
+        WHERE id=?
+        """,
+        (new_password, user[0])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return render_template(
+        "login.html",
+        message="Password reset successfully! Please login."
+    )
+
+
+# =========================
+# DASHBOARD
+# =========================
+
+@app.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    conn = get_db()
+    cursor = conn.cursor()
+
     cursor.execute(
         """
         SELECT id, date, category, amount, description
         FROM expenses
+        WHERE user_id=?
         ORDER BY id DESC
-        """
+        """,
+        (user_id,)
     )
 
     expenses = cursor.fetchall()
 
-    # Total expenses
     cursor.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM expenses"
+        """
+        SELECT COALESCE(SUM(amount), 0)
+        FROM expenses
+        WHERE user_id=?
+        """,
+        (user_id,)
     )
 
     total = cursor.fetchone()[0]
 
-    # Category totals
     cursor.execute(
         """
         SELECT category, SUM(amount)
         FROM expenses
+        WHERE user_id=?
         GROUP BY category
         ORDER BY SUM(amount) DESC
-        """
+        """,
+        (user_id,)
     )
 
     category_totals = cursor.fetchall()
@@ -180,15 +241,16 @@ def dashboard():
     )
 
 
-# =========================================================
-# EXPENSES PAGE
-# =========================================================
+# =========================
+# EXPENSES
+# =========================
 
 @app.route("/expenses")
 def expenses_page():
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     conn = get_db()
     cursor = conn.cursor()
@@ -197,14 +259,21 @@ def expenses_page():
         """
         SELECT id, date, category, amount, description
         FROM expenses
+        WHERE user_id=?
         ORDER BY id DESC
-        """
+        """,
+        (user_id,)
     )
 
     expenses = cursor.fetchall()
 
     cursor.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM expenses"
+        """
+        SELECT COALESCE(SUM(amount), 0)
+        FROM expenses
+        WHERE user_id=?
+        """,
+        (user_id,)
     )
 
     total = cursor.fetchone()[0]
@@ -218,28 +287,28 @@ def expenses_page():
     )
 
 
-# =========================================================
+# =========================
 # ADD EXPENSE PAGE
-# =========================================================
+# =========================
 
 @app.route("/add-expense")
 def add_expense_page():
-
     if "user_id" not in session:
         return redirect("/login")
 
     return render_template("add_expense.html")
 
 
-# =========================================================
+# =========================
 # ADD EXPENSE
-# =========================================================
+# =========================
 
 @app.route("/add_expense", methods=["POST"])
 def add_expense():
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     date = request.form.get("date", "")
     category = request.form.get("category", "").strip()
@@ -257,20 +326,31 @@ def add_expense():
 
     cursor.execute(
         """
-        INSERT INTO expenses(date, category, amount, description)
-        VALUES(?,?,?,?)
+        INSERT INTO expenses(
+            user_id,
+            date,
+            category,
+            amount,
+            description
+        )
+        VALUES(?,?,?,?,?)
         """,
-        (date, category, amount, description)
+        (
+            user_id,
+            date,
+            category,
+            amount,
+            description
+        )
     )
 
-    # Automatically add category
     try:
         cursor.execute(
             """
-            INSERT OR IGNORE INTO categories(name)
-            VALUES(?)
+            INSERT INTO categories(user_id, name)
+            VALUES(?,?)
             """,
-            (category,)
+            (user_id, category)
         )
     except sqlite3.Error:
         pass
@@ -281,16 +361,16 @@ def add_expense():
     return redirect("/expenses")
 
 
-# =========================================================
-# SEARCH EXPENSES
-# =========================================================
+# =========================
+# SEARCH
+# =========================
 
 @app.route("/search", methods=["POST"])
 def search():
-
     if "user_id" not in session:
         return redirect("/login")
 
+    user_id = session["user_id"]
     category = request.form.get("category", "").strip()
 
     conn = get_db()
@@ -300,16 +380,25 @@ def search():
         """
         SELECT id, date, category, amount, description
         FROM expenses
-        WHERE category LIKE ?
+        WHERE user_id=?
+        AND category LIKE ?
         ORDER BY id DESC
         """,
-        ("%" + category + "%",)
+        (
+            user_id,
+            "%" + category + "%"
+        )
     )
 
     expenses = cursor.fetchall()
 
     cursor.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM expenses"
+        """
+        SELECT COALESCE(SUM(amount), 0)
+        FROM expenses
+        WHERE user_id=?
+        """,
+        (user_id,)
     )
 
     total = cursor.fetchone()[0]
@@ -324,15 +413,16 @@ def search():
     )
 
 
-# =========================================================
+# =========================
 # EDIT EXPENSE
-# =========================================================
+# =========================
 
 @app.route("/edit/<int:id>")
 def edit(id):
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     conn = get_db()
     cursor = conn.cursor()
@@ -342,8 +432,9 @@ def edit(id):
         SELECT id, date, category, amount, description
         FROM expenses
         WHERE id=?
+        AND user_id=?
         """,
-        (id,)
+        (id, user_id)
     )
 
     expense = cursor.fetchone()
@@ -359,15 +450,16 @@ def edit(id):
     )
 
 
-# =========================================================
+# =========================
 # UPDATE EXPENSE
-# =========================================================
+# =========================
 
 @app.route("/update/<int:id>", methods=["POST"])
 def update(id):
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     date = request.form.get("date", "")
     category = request.form.get("category", "").strip()
@@ -380,19 +472,30 @@ def update(id):
     cursor.execute(
         """
         UPDATE expenses
-        SET date=?, category=?, amount=?, description=?
+        SET date=?,
+            category=?,
+            amount=?,
+            description=?
         WHERE id=?
+        AND user_id=?
         """,
-        (date, category, amount, description, id)
+        (
+            date,
+            category,
+            amount,
+            description,
+            id,
+            user_id
+        )
     )
 
     try:
         cursor.execute(
             """
-            INSERT OR IGNORE INTO categories(name)
-            VALUES(?)
+            INSERT INTO categories(user_id, name)
+            VALUES(?,?)
             """,
-            (category,)
+            (user_id, category)
         )
     except sqlite3.Error:
         pass
@@ -403,22 +506,27 @@ def update(id):
     return redirect("/expenses")
 
 
-# =========================================================
+# =========================
 # DELETE EXPENSE
-# =========================================================
+# =========================
 
 @app.route("/delete/<int:id>")
 def delete(id):
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute(
-        "DELETE FROM expenses WHERE id=?",
-        (id,)
+        """
+        DELETE FROM expenses
+        WHERE id=?
+        AND user_id=?
+        """,
+        (id, user_id)
     )
 
     conn.commit()
@@ -427,15 +535,16 @@ def delete(id):
     return redirect("/expenses")
 
 
-# =========================================================
+# =========================
 # CATEGORIES
-# =========================================================
+# =========================
 
 @app.route("/categories")
 def categories():
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     conn = get_db()
     cursor = conn.cursor()
@@ -447,9 +556,11 @@ def categories():
             COUNT(*),
             COALESCE(SUM(amount), 0)
         FROM expenses
+        WHERE user_id=?
         GROUP BY category
         ORDER BY SUM(amount) DESC
-        """
+        """,
+        (user_id,)
     )
 
     category_data = cursor.fetchall()
@@ -462,48 +573,55 @@ def categories():
     )
 
 
-# =========================================================
+# =========================
 # REPORTS
-# =========================================================
+# =========================
 
 @app.route("/reports")
 def reports():
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     conn = get_db()
     cursor = conn.cursor()
 
-    # Category totals
     cursor.execute(
         """
         SELECT category, SUM(amount)
         FROM expenses
+        WHERE user_id=?
         GROUP BY category
         ORDER BY SUM(amount) DESC
-        """
+        """,
+        (user_id,)
     )
 
     category_totals = cursor.fetchall()
 
-    # Monthly totals
     cursor.execute(
         """
         SELECT
             substr(date, 1, 7) AS month,
             SUM(amount)
         FROM expenses
+        WHERE user_id=?
         GROUP BY substr(date, 1, 7)
         ORDER BY month DESC
-        """
+        """,
+        (user_id,)
     )
 
     monthly_totals = cursor.fetchall()
 
-    # Grand total
     cursor.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM expenses"
+        """
+        SELECT COALESCE(SUM(amount), 0)
+        FROM expenses
+        WHERE user_id=?
+        """,
+        (user_id,)
     )
 
     total = cursor.fetchone()[0]
@@ -518,15 +636,16 @@ def reports():
     )
 
 
-# =========================================================
+# =========================
 # PROFILE
-# =========================================================
+# =========================
 
 @app.route("/profile")
 def profile():
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     conn = get_db()
     cursor = conn.cursor()
@@ -537,7 +656,7 @@ def profile():
         FROM users
         WHERE id=?
         """,
-        (session["user_id"],)
+        (user_id,)
     )
 
     user = cursor.fetchone()
@@ -550,15 +669,16 @@ def profile():
     )
 
 
-# =========================================================
+# =========================
 # UPDATE PROFILE
-# =========================================================
+# =========================
 
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
-
     if "user_id" not in session:
         return redirect("/login")
+
+    user_id = session["user_id"]
 
     username = request.form.get("username", "").strip()
     email = request.form.get("email", "").strip()
@@ -567,14 +687,18 @@ def update_profile():
     cursor = conn.cursor()
 
     try:
-
         cursor.execute(
             """
             UPDATE users
-            SET username=?, email=?
+            SET username=?,
+                email=?
             WHERE id=?
             """,
-            (username, email, session["user_id"])
+            (
+                username,
+                email,
+                user_id
+            )
         )
 
         conn.commit()
@@ -585,7 +709,6 @@ def update_profile():
         message = "Profile updated successfully."
 
     except sqlite3.IntegrityError:
-
         message = "Username already exists."
 
     conn.close()
@@ -599,7 +722,7 @@ def update_profile():
         FROM users
         WHERE id=?
         """,
-        (session["user_id"],)
+        (user_id,)
     )
 
     user = cursor.fetchone()
@@ -613,21 +736,19 @@ def update_profile():
     )
 
 
-# =========================================================
+# =========================
 # LOGOUT
-# =========================================================
+# =========================
 
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/login")
 
 
-# =========================================================
+# =========================
 # RUN APP
-# =========================================================
+# =========================
 
 if __name__ == "__main__":
     app.run(debug=True)
