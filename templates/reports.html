@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Reports - Personal Expense Tracker</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: #f4f7fb;
+    color: #102a43;
+}
+
+.sidebar {
+    width: 230px;
+    min-height: 100vh;
+    background: linear-gradient(180deg,#09233d,#061a2e);
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    padding: 25px 15px;
+    color: white;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px 30px;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg,#00b4ff,#0078ff);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-text {
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 18px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.menu a {
+    color: #e6edf5;
+    text-decoration: none;
+    padding: 11px 12px;
+    border-radius: 7px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.menu a:hover,
+.menu a.active {
+    background: #087ff5;
+}
+
+.menu-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.main {
+    margin-left: 230px;
+    padding: 35px 45px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+h1 {
+    font-size: 30px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.logout {
+    background: #ff3b3b;
+    color: white;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.card-title {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.card-subtitle {
+    color: #718096;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.card-body {
+    padding: 22px;
+}
+
+.total {
+    font-size: 28px;
+    font-weight: bold;
+    color: #0878d1;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #f1f6fb;
+    padding: 13px;
+    text-align: left;
+    font-size: 11px;
+}
+
+td {
+    padding: 13px;
+    border-top: 1px solid #edf2f7;
+    font-size: 12px;
+}
+
+.amount {
+    color: #0878d1;
+    font-weight: bold;
+}
+
+.empty {
+    text-align: center;
+    padding: 30px;
+    color: #718096;
+}
+
+@media(max-width:700px) {
+
+    .sidebar {
+        width: 65px;
+        padding: 20px 8px;
+    }
+
+    .logo {
+        justify-content: center;
+    }
+
+    .logo-text {
+        display: none;
+    }
+
+    .menu a {
+        justify-content: center;
+    }
+
+    .menu a span:not(.menu-icon) {
+        display: none;
+    }
+
+    .main {
+        margin-left: 65px;
+        padding: 20px 15px;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<aside class="sidebar">
+
+<div class="logo">
+
+<div class="logo-icon">💳</div>
+
+<div class="logo-text">
+Personal Expense<br>
+Tracker
+</div>
+
+</div>
+
+<nav class="menu">
+
+<a href="/dashboard">
+<span class="menu-icon">⌂</span>
+<span>Dashboard</span>
+</a>
+
+<a href="/expenses">
+<span class="menu-icon">▣</span>
+<span>Expenses</span>
+</a>
+
+<a href="/add-expense">
+<span class="menu-icon">⊕</span>
+<span>Add Expense</span>
+</a>
+
+<a href="/categories">
+<span class="menu-icon">▦</span>
+<span>Categories</span>
+</a>
+
+<a href="/reports" class="active">
+<span class="menu-icon">▥</span>
+<span>Reports</span>
+</a>
+
+<a href="/profile">
+<span class="menu-icon">♙</span>
+<span>Profile</span>
+</a>
+
+<a href="/logout">
+<span class="menu-icon">⇥</span>
+<span>Logout</span>
+</a>
+
+</nav>
+
+</aside>
+
+
+<main class="main">
+
+<div class="container">
+
+<div class="header">
+
+<div>
+
+<h1>Reports</h1>
+
+<p class="subtitle">
+Analyze your expense records.
+</p>
+
+</div>
+
+<a href="/logout" class="logout">
+Logout
+</a>
+
+</div>
+
+
+<div class="cards">
+
+<div class="card">
+
+<div class="card-header">
+
+<div class="card-title">
+Total Expenses
+</div>
+
+<div class="card-subtitle">
+Overall spending
+</div>
+
+</div>
+
+<div class="card-body">
+
+<div class="total">
+₹ {{ total }}
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="card-header">
+
+<div class="card-title">
+Report Overview
+</div>
+
+<div class="card-subtitle">
+Expense analysis
+</div>
+
+</div>
+
+<div class="card-body">
+
+<p style="font-size:13px;color:#718096;">
+This page shows your expenses grouped by category and month.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<div class="card-header">
+
+<div class="card-title">
+Category Report
+</div>
+
+<div class="card-subtitle">
+Total spending by category.
+</div>
+
+</div>
+
+
+{% if category_totals %}
+
+<div style="overflow-x:auto;">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Category</th>
+<th>Total Amount</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for category in category_totals %}
+
+<tr>
+
+<td>
+{{ category[0] }}
+</td>
+
+<td class="amount">
+₹ {{ category[1] }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% else %}
+
+<div class="empty">
+No category data available.
+</div>
+
+{% endif %}
+
+</div>
+
+
+<div class="card">
+
+<div class="card-header">
+
+<div class="card-title">
+Monthly Report
+</div>
+
+<div class="card-subtitle">
+Total spending for each month.
+</div>
+
+</div>
+
+
+{% if monthly_totals %}
+
+<div style="overflow-x:auto;">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Month</th>
+<th>Total Amount</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for month in monthly_totals %}
+
+<tr>
+
+<td>
+{{ month[0] }}
+</td>
+
+<td class="amount">
+₹ {{ month[1] }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% else %}
+
+<div class="empty">
+No monthly data available.
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+
+</main>
+
+</body>
+</html>

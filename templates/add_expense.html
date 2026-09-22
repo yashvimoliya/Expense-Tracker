@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Add Expense - Personal Expense Tracker</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: #f4f7fb;
+    color: #102a43;
+}
+
+.sidebar {
+    width: 230px;
+    min-height: 100vh;
+    background: linear-gradient(180deg,#09233d,#061a2e);
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    padding: 25px 15px;
+    color: white;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px 30px;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg,#00b4ff,#0078ff);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-text {
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 18px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.menu a {
+    color: #e6edf5;
+    text-decoration: none;
+    padding: 11px 12px;
+    border-radius: 7px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.menu a:hover,
+.menu a.active {
+    background: #087ff5;
+    color: white;
+}
+
+.menu-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.main {
+    margin-left: 230px;
+    padding: 35px 45px;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+h1 {
+    font-size: 30px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.logout {
+    background: #ff3b3b;
+    color: white;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.card-subtitle {
+    color: #718096;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.card-body {
+    padding: 25px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #087ff5;
+    box-shadow: 0 0 0 2px rgba(8,127,245,.1);
+}
+
+.button {
+    margin-top: 22px;
+    background: #087ff5;
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.button:hover {
+    background: #066dcc;
+}
+
+.message {
+    background: #ffe8e8;
+    color: #c62828;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 18px;
+    font-size: 13px;
+}
+
+@media(max-width:700px) {
+
+    .sidebar {
+        width: 65px;
+        padding: 20px 8px;
+    }
+
+    .logo {
+        justify-content: center;
+    }
+
+    .logo-text {
+        display: none;
+    }
+
+    .menu a {
+        justify-content: center;
+    }
+
+    .menu a span:not(.menu-icon) {
+        display: none;
+    }
+
+    .main {
+        margin-left: 65px;
+        padding: 20px 15px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full {
+        grid-column: auto;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<aside class="sidebar">
+
+<div class="logo">
+
+<div class="logo-icon">💳</div>
+
+<div class="logo-text">
+Personal Expense<br>
+Tracker
+</div>
+
+</div>
+
+<nav class="menu">
+
+<a href="/dashboard">
+<span class="menu-icon">⌂</span>
+<span>Dashboard</span>
+</a>
+
+<a href="/expenses">
+<span class="menu-icon">▣</span>
+<span>Expenses</span>
+</a>
+
+<a href="/add-expense" class="active">
+<span class="menu-icon">⊕</span>
+<span>Add Expense</span>
+</a>
+
+<a href="/categories">
+<span class="menu-icon">▦</span>
+<span>Categories</span>
+</a>
+
+<a href="/reports">
+<span class="menu-icon">▥</span>
+<span>Reports</span>
+</a>
+
+<a href="/profile">
+<span class="menu-icon">♙</span>
+<span>Profile</span>
+</a>
+
+<a href="/logout">
+<span class="menu-icon">⇥</span>
+<span>Logout</span>
+</a>
+
+</nav>
+
+</aside>
+
+
+<main class="main">
+
+<div class="container">
+
+<div class="header">
+
+<div>
+
+<h1>Add Expense</h1>
+
+<p class="subtitle">
+Record a new expense in your account.
+</p>
+
+</div>
+
+<a href="/logout" class="logout">
+Logout
+</a>
+
+</div>
+
+
+<div class="card">
+
+<div class="card-header">
+
+<div class="card-title">
+New Expense
+</div>
+
+<div class="card-subtitle">
+Enter the details of your expense.
+</div>
+
+</div>
+
+<div class="card-body">
+
+{% if message %}
+
+<div class="message">
+{{ message }}
+</div>
+
+{% endif %}
+
+
+<form action="/add_expense" method="POST">
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Date</label>
+
+<input
+type="date"
+name="date"
+required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Category</label>
+
+<input
+type="text"
+name="category"
+placeholder="Food, Travel, Shopping..."
+required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Amount</label>
+
+<input
+type="number"
+name="amount"
+step="0.01"
+placeholder="Enter amount"
+required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Description</label>
+
+<input
+type="text"
+name="description"
+placeholder="What was this expense for?"
+>
+
+</div>
+
+</div>
+
+
+<button type="submit" class="button">
++ Add Expense
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+</body>
+</html>
